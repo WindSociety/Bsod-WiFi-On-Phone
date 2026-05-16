@@ -1,40 +1,41 @@
 import socket
+import os
 
-# === НАСТРОЙКИ ===
-SERVER_IP = '192.168.1.XX'   # ЗДЕСЬ УКАЖИ IP ТВОЕГО КОМПЬЮТЕРА
+# === НАСТРОЙКИ (измени IP на свой) ===
+SERVER_IP = '192.168.1.35'   # сюда введи IPv4-адрес своего ПК
 SERVER_PORT = 9999
-# ================
+# ===================================
+
+def clear():
+    os.system('clear' if os.name == 'posix' else 'cls')
 
 def send_command(cmd):
-    """Отправляет команду на сервер и выводит ответ"""
     try:
-        # Создаем сокет и устанавливаем соединение
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.connect((SERVER_IP, SERVER_PORT))
-            print(f"[*] Отправка: {cmd}")
-            s.sendall(cmd.encode('utf-8'))
-            
-            # Получаем ответ от сервера
-            response = s.recv(4096).decode('utf-8')
-            print(f"[+] Ответ: {response}")
-    except ConnectionRefusedError:
-        print("[-] Ошибка: Сервер не найден. Убедись, что сервер запущен, а IP и порт указаны верно.")
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect((SERVER_IP, SERVER_PORT))
+        s.sendall(cmd.encode())
+        response = s.recv(4096).decode()
+        s.close()
+        return response
     except Exception as e:
-        print(f"[-] Ошибка: {e}")
+        return f"Error: {e}"
+
+def main():
+    clear()
+    print("=== WindSociety Remote Control ===")
+    print(f"Connected to {SERVER_IP}:{SERVER_PORT}")
+    print("Commands: /bsod, /exit, /help")
+    while True:
+        cmd = input("> ").strip().lower()
+        if cmd == "/exit":
+            print("Bye.")
+            break
+        elif cmd == "/help":
+            print("Available commands: /bsod, /exit, /help")
+        elif cmd == "/bsod":
+            print(send_command("/bsod"))
+        else:
+            print("Unknown command. Type /help")
 
 if __name__ == "__main__":
-    print("Управление ПК через Termux")
-    print("Введите /help для списка команд или /exit для выхода.")
-    
-    while True:
-        # Получаем команду от пользователя
-        user_input = input("> ").strip()
-        
-        if user_input.lower() == "/exit":
-            print("Выход.")
-            break
-        elif user_input.lower() == "/help":
-            print("Доступные команды: /bsod, /exit, /help")
-        else:
-            # Отправляем команду на сервер
-            send_command(user_input)
+    main()
